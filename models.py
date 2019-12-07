@@ -70,7 +70,7 @@ def M(seq_len=128, act_len=3, output_dims=32, n_mixes=5, weights=None):
 def C(_in=32+256, _out=3, weights=None):
     C = Controller(_in, _out)
     if weights:
-        C.set_weights(weights)
+        C.set_weights(np.load(weights))
     return C
 
 class Controller():
