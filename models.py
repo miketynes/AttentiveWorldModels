@@ -1,13 +1,16 @@
 import tensorflow as tf
 from tensorflow.keras.layers import (Dense, Input, Conv2D, 
                                      Reshape, Lambda, LSTM)
-from tensorflow.keras.models import Model
+from tensorflow.keras.models import Model, Sequential
 import tensorflow.keras.backend as K
 import mdn
+import utils
 
-physical_devices = tf.config.experimental.list_physical_devices('GPU')
-tf.config.experimental.set_memory_growth(physical_devices[0], True)
-
+if tf.test.is_gpu_available():
+    physical_devices = tf.config.experimental.list_physical_devices('GPU')
+    tf.config.experimental.set_memory_growth(physical_devices[0], True)
+    
+    
 BATCH_SIZE = 128
 LATENT_SIZE = 32
 
@@ -49,9 +52,9 @@ def Encoder(LATENT_SIZE=32, weights=None):
         encoder.load_weights(weights)
     return encoder
 
-def M(output_dims=32, n_mixes=5, weights=None)
+def M(seq_len=128, act_len=3, output_dims=32, n_mixes=5, weights=None):
     M = Sequential([
-        Input((seq_len, act_len + utils.LATENT_SIZE)),
+        Input((None, act_len + utils.LATENT_SIZE)),
         LSTM(256, return_sequences=True),
         mdn.MDN(output_dims, n_mixes)
     ])
