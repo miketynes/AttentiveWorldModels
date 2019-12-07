@@ -5,9 +5,13 @@ from tensorflow.keras.callbacks import Callback
 BATCH_SIZE = 128
 LATENT_SIZE = 32
 
-def preprocess_images(ims, num=1024):
+def preprocess_images(ims):
     ims = np.true_divide(ims, 255, dtype=np.float32)
-    ims = resize(ims, output_shape=(num, 64, 64, 3))
+    if len(ims.shape) == 3:
+        ims = resize(ims, output_shape=(64, 64, 3))
+        ims = np.expand_dims(ims, 0)
+    else:
+        ims = resize(ims, output_shape=(ims.shape[0], 64, 64, 3))
     return ims
 
 def to_latent(model, ims):
