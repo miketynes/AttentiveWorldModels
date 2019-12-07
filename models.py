@@ -3,6 +3,7 @@ from tensorflow.keras.layers import (Dense, Input, Conv2D,
                                      Reshape, Lambda, LSTM)
 from tensorflow.keras.models import Model, Sequential
 import tensorflow.keras.backend as K
+import numpy as np
 import mdn
 import utils
 
@@ -65,3 +66,41 @@ def M(seq_len=128, act_len=3, output_dims=32, n_mixes=5, weights=None):
     if weights: 
         M.load_weights(weights)
     return M
+
+def C(_in=32+256, _out=3, weights=None):
+    C = Controller(_in, _out)
+    if weights:
+        C.set_weights(weights)
+    return C
+
+class Controller():
+    def __init__(self, input_size, output_size):
+        self._in = input_size
+        self._out = output_size
+        self.W = np.random.randn(input_size, output_size)
+    
+    def clip(self, x, lo=0.0, hi=1.0):
+        return np.minimum(np.maximum(x, lo), hi)
+    
+    def sigmoid(self, x):
+        return 1 / (1 + np.exp(-x))
+    
+    def __call__(self, obs):
+        action = np.dot(obs, self.W)
+        
+        action[0] = np.tanh(action[0])
+        action[1] = self.sigmoid(action[1])
+        action[2] = self.clip(np.tanh(action[2]))
+        
+        return action
+    
+    def set_weights(self, W):
+        # assume W is flat.
+        self.W = np.reshape(W, self.W.shape)
+        
+    def randomly_init(self):
+        self.W = np.random.randn(*self.W.shape)
+       
+    @property
+    def shape(self):
+        return self.W.shape
