@@ -107,6 +107,17 @@ class BahdanauAttention(tf.keras.Model):
         # context_vector = tf.reduce_sum(context_vector, axis=1)
 
         return context_vector, attention_weights
+   
+    def get_config(self):
+        config = super(BahdanauAttention, self).get_config()
+        config.update({
+            'units':self.units
+        })
+        return config
+    
+    def from_config(cls, config):
+        return cls(**config)
+    
 
 class attention_mdn_rnn(tf.keras.Model):
     def __init__(self, 
@@ -147,6 +158,20 @@ class attention_mdn_rnn(tf.keras.Model):
         
         return x, hidden_out#, attention_weights
 
+    
+    def get_config(self):
+        config = super(attention_mdn_rnn, self).get_config()
+        config.update({'seq_len':self.seq_len,
+                        'act_len':self.act_len,
+                        'latent_size':self.latent_size,
+                        'cells':self.cells,
+                        'output_dim':self.output_dim,
+                        'n_mixes':self.n_mixes})
+        return config
+
+    def from_config(cls, config):
+        return cls(**config)
+    
     def reset_state(self, batch_size):
         return tf.zeros((batch_size, self.cells))
 
