@@ -38,7 +38,7 @@ def sampling(args):
     return bar
 
 
-def Encoder(LATENT_SIZE=32, weights=None):
+def V(LATENT_SIZE=32, weights=None):
     inputs = Input(shape=(64, 64, 3), name='encoder_input')
     h = Conv2D(32, 4, strides=2, activation="relu", name="enc_conv1")(inputs)
     h = Conv2D(64, 4, strides=2, activation="relu", name="enc_conv2")(h)
@@ -72,6 +72,84 @@ def C(_in=32+256, _out=3, weights=None):
     if weights:
         C.set_weights(np.load(weights))
     return C
+
+def attn_M(weights=None):
+    M = attention_mdn_rnn()
+    if weights:
+        M.load_weights(weights)
+    return M
+
+class BahdanauAttention(tf.keras.Model):
+    def __init__(self, units):
+        super(BahdanauAttention, self).__init__()
+        self.units = units
+        self.W1 = tf.keras.layers.Dense(units, input_shape=(35,))
+        self.W2 = tf.keras.layers.Dense(units, input_shape=(256,))
+        self.V = tf.keras.layers.Dense(1, input_shape=(256,))
+
+    def call(self, features, hidden):
+        # features(CNN_encoder output) shape == (batch_size, 64, embedding_dim)
+        # hidden shape == (batch_size, hidden_size)
+        # hidden_with_time_axis shape == (batch_size, 1, hidden_size)
+        # hidden_with_time_axis = tf.expand_dims(hidden, 1)
+        # 
+        features = tf.expand_dims(features, 0)
+        hidden = tf.expand_dims(hidden, 0)
+        # score shape == (batch_size, 64, hidden_size)
+        score = tf.nn.tanh(self.W1(features) + self.W2(hidden))
+
+        # attention_weights shape == (batch_size, 64, 1)
+        # you get 1 at the last axis because you are applying score to self.V
+        attention_weights = tf.nn.softmax(self.V(score), axis=1)
+
+        # context_vector shape after sum == (batch_size, hidden_size)
+        context_vector = attention_weights * features
+        # context_vector = tf.reduce_sum(context_vector, axis=1)
+
+        return context_vector, attention_weights
+
+class attention_mdn_rnn(tf.keras.Model):
+    def __init__(self, 
+                seq_len=128, 
+                act_len=3, 
+                latent_size=32, 
+                cells=256, 
+                output_dim=32, 
+                n_mixes=5):
+        super(attention_mdn_rnn, self).__init__()
+
+        
+        self.seq_len=seq_len
+        self.act_len=act_len
+        self.latent_size=latent_size
+        self.cells=cells
+        self.output_dim=output_dim
+        self.n_mixes=n_mixes
+        
+        #self.inputs = Input((None, self.act_len + self.latent_size))
+        self.lstm   = LSTM(self.cells,
+                            return_sequences=True,
+                            return_state=True,
+                            recurrent_initializer='glorot_uniform')
+
+        self.attention = BahdanauAttention(self.cells)
+        self.out       = mdn.MDN(self.output_dim, self.n_mixes)
+        
+    def call(self, x, hidden):
+
+        context_vector, attention_weights = self.attention(x, hidden)
+        #context_vector = context_vector.numpy().squeeze()
+        
+        # context_vector = features * attention_weights
+
+        x, hidden_out, c = self.lstm(context_vector[0])
+        x = self.out(x)
+        
+        return x, hidden_out#, attention_weights
+
+    def reset_state(self, batch_size):
+        return tf.zeros((batch_size, self.cells))
+
 
 class Controller():
     def __init__(self, input_size, output_size):
