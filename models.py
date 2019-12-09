@@ -11,7 +11,8 @@ import utils
 if tf.test.is_gpu_available():
     physical_devices = tf.config.experimental.list_physical_devices('GPU')
     tf.config.experimental.set_memory_growth(physical_devices[0], True)
-    
+
+# tf.keras.backend.set_floatx('float64')
     
 BATCH_SIZE = 128
 LATENT_SIZE = 32

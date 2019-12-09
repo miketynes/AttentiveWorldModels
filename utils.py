@@ -1,3 +1,6 @@
+import os
+
+from tqdm import tqdm
 import numpy as np
 from skimage.transform import resize
 from tensorflow.keras.callbacks import Callback
@@ -46,3 +49,12 @@ class TrainTimeCallback(Callback):
     def print_train_time(self):
         print(f'Train time for model: {self.train_time}')
         
+        
+def load_folder(path, files):
+    #files = os.listdir(path)
+    _1 = np.load(os.path.join(path, files[0]))
+    data = np.zeros((len(files), *_1.shape))
+    for i, fname in enumerate(tqdm(files)):
+        data[i] = np.load(os.path.join(path, fname))
+    return data
+
