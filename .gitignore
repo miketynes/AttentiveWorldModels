@@ -1,2 +1,4 @@
-./data/*
+sausage/*
+data/*
+!data/weights/*
 .ipynb_checkpoints/*

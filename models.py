@@ -1,5 +1,6 @@
 import tensorflow as tf
 from tensorflow.keras.layers import (Dense, Input, Conv2D, 
+                                     Conv2DTranspose,
                                      Reshape, Lambda, LSTM)
 from tensorflow.keras.models import Model, Sequential
 import tensorflow.keras.backend as K
@@ -39,6 +40,8 @@ def sampling(args):
 
 
 def V(LATENT_SIZE=32, weights=None):
+    """yeet to latent realm
+    """
     inputs = Input(shape=(64, 64, 3), name='encoder_input')
     h = Conv2D(32, 4, strides=2, activation="relu", name="enc_conv1")(inputs)
     h = Conv2D(64, 4, strides=2, activation="relu", name="enc_conv2")(h)
@@ -52,6 +55,22 @@ def V(LATENT_SIZE=32, weights=None):
     if weights: 
         encoder.load_weights(weights)
     return encoder
+
+def V_inverse(LATENT_SIZE=32, weights=None):
+    """Yeet's you back from the latent dimension.
+    """
+    latent_inputs = Input(shape=(LATENT_SIZE,), name='decoder_input')
+    h = Dense(4*256, name="dec_fc")(latent_inputs)
+    h = Reshape([1, 1, 4*256])(h)
+    h = Conv2DTranspose(128, 5, strides=2, activation="relu", name="dec_deconv1")(h)
+    h = Conv2DTranspose(64, 5, strides=2, activation="relu", name="dec_deconv2")(h)
+    h = Conv2DTranspose(32, 6, strides=2, activation="relu", name="dec_deconv3")(h)
+    outputs = Conv2DTranspose(3, 6, strides=2, activation='sigmoid', name="dec_deconv4")(h)
+
+    decoder = Model(latent_inputs, outputs, name='decoder')
+    if weights: 
+        decoder.load_weights(weights)
+    return decoder
 
 def M(seq_len=128, act_len=3, output_dims=32, n_mixes=5, weights=None):
     M = Sequential([

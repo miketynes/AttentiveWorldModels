@@ -1,0 +1,2 @@
+model_checkpoint_path: "attn_mdn_rnn"
+all_model_checkpoint_paths: "attn_mdn_rnn"
