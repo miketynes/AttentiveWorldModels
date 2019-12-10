@@ -17,7 +17,8 @@ If you want to run your notebooks, launch jupyter from this environment.
 conda activate AWM
 git clone git@github.com:hardmaru/estool.git
 cd estool
-pip install -e .```
+pip install -e .
+```
 
 
 ## Demo
